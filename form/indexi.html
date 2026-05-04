@@ -1,0 +1,1046 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>FormFlow — My Forms Project</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link href="https://fonts.googleapis.com/css2?family=Bebas+Neue&family=Manrope:wght@300;400;500;600;700;800&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+  <style>
+    /* ── TOKENS ──────────────────────────────────── */
+    :root {
+      --void:    #06070d;
+      --deep:    #0a0c18;
+      --layer:   #0e1121;
+      --card:    #131626;
+      --rim:     rgba(255,255,255,.07);
+      --rim2:    rgba(255,255,255,.13);
+      --cyan:    #00f2fe;
+      --cyan2:   #4facfe;
+      --neon:    #39ff14;
+      --amber:   #ffb347;
+      --rose:    #ff6b9d;
+      --violet:  #b06aff;
+      --text:    #eef0fb;
+      --text2:   #7b82a8;
+      --text3:   #3d4260;
+      --r: 16px;
+    }
+
+    /* ── RESET ──────────────────────────────────── */
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+    html { scroll-behavior: smooth; }
+    body {
+      font-family: 'Manrope', sans-serif;
+      background: var(--void);
+      color: var(--text);
+      overflow-x: hidden;
+      cursor: default;
+    }
+    ::-webkit-scrollbar { width: 4px; }
+    ::-webkit-scrollbar-track { background: var(--void); }
+    ::-webkit-scrollbar-thumb { background: var(--cyan2); border-radius: 2px; }
+    a { text-decoration: none; color: inherit; }
+
+    /* ── ANIMATED BACKGROUND ────────────────────── */
+    .bg-layer {
+      position: fixed; inset: 0; z-index: 0; pointer-events: none;
+      overflow: hidden;
+    }
+    /* Grid */
+    .bg-layer::before {
+      content: '';
+      position: absolute; inset: 0;
+      background-image:
+        linear-gradient(rgba(0,242,254,.035) 1px, transparent 1px),
+        linear-gradient(90deg, rgba(0,242,254,.035) 1px, transparent 1px);
+      background-size: 50px 50px;
+    }
+    /* Mesh blobs */
+    .blob {
+      position: absolute; border-radius: 50%;
+      filter: blur(80px); opacity: .55;
+      animation: drift 14s ease-in-out infinite;
+    }
+    .blob-1 {
+      width: 520px; height: 520px;
+      background: radial-gradient(circle, rgba(0,242,254,.18) 0%, transparent 70%);
+      top: -120px; left: -120px;
+      animation-delay: 0s;
+    }
+    .blob-2 {
+      width: 420px; height: 420px;
+      background: radial-gradient(circle, rgba(176,106,255,.14) 0%, transparent 70%);
+      bottom: -100px; right: -80px;
+      animation-delay: -7s;
+    }
+    .blob-3 {
+      width: 300px; height: 300px;
+      background: radial-gradient(circle, rgba(57,255,20,.08) 0%, transparent 70%);
+      top: 40%; left: 55%;
+      animation-delay: -3.5s;
+    }
+    @keyframes drift {
+      0%,100% { transform: translate(0,0) scale(1); }
+      33%      { transform: translate(40px,-30px) scale(1.05); }
+      66%      { transform: translate(-25px,40px) scale(.97); }
+    }
+    /* Floating particles */
+    .particle {
+      position: absolute; border-radius: 50%;
+      background: var(--cyan);
+      animation: floatUp linear infinite;
+      opacity: 0;
+    }
+    @keyframes floatUp {
+      0%   { transform: translateY(100vh) scale(0); opacity: 0; }
+      10%  { opacity: .6; }
+      90%  { opacity: .3; }
+      100% { transform: translateY(-10vh) scale(.5); opacity: 0; }
+    }
+
+    /* ── NAV ─────────────────────────────────────── */
+    .nav {
+      position: fixed; top: 0; left: 0; right: 0; z-index: 1000;
+      height: 64px;
+      display: flex; align-items: center; justify-content: space-between;
+      padding: 0 2.5rem;
+      background: rgba(6,7,13,.88);
+      backdrop-filter: blur(22px);
+      border-bottom: 1px solid var(--rim);
+      animation: slideDown .5s ease both;
+    }
+    @keyframes slideDown { from { transform: translateY(-100%); opacity: 0; } to { transform: translateY(0); opacity: 1; } }
+
+    .nav-brand {
+      display: flex; align-items: center; gap: 10px;
+    }
+    .nav-logo-mark {
+      width: 36px; height: 36px; border-radius: 10px;
+      background: linear-gradient(135deg, var(--cyan2), var(--cyan));
+      display: flex; align-items: center; justify-content: center;
+      font-family: 'Bebas Neue', cursive;
+      font-size: 1.2rem; letter-spacing: .05em; color: var(--void);
+      box-shadow: 0 0 20px rgba(0,242,254,.35);
+      transition: box-shadow .2s;
+    }
+    .nav-logo-mark:hover { box-shadow: 0 0 32px rgba(0,242,254,.55); }
+    .nav-wordmark {
+      font-family: 'Bebas Neue', cursive;
+      font-size: 1.35rem; letter-spacing: .08em; color: var(--text);
+    }
+    .nav-wordmark span { color: var(--cyan); }
+
+    .nav-links { display: flex; gap: 2px; align-items: center; }
+    .nav-link {
+      color: var(--text2); font-size: .82rem; font-weight: 600;
+      padding: 7px 14px; border-radius: 9px;
+      transition: all .18s; letter-spacing: .02em;
+    }
+    .nav-link:hover { background: var(--card); color: var(--cyan); }
+    .nav-link.active { background: var(--card); color: var(--cyan); }
+
+    .nav-cta {
+      background: linear-gradient(135deg, var(--cyan2), var(--cyan));
+      color: var(--void); font-size: .82rem; font-weight: 800;
+      padding: 8px 20px; border-radius: 9px; letter-spacing: .04em;
+      transition: all .2s; display: flex; align-items: center; gap: 6px;
+      box-shadow: 0 0 0 rgba(0,242,254,0);
+    }
+    .nav-cta:hover {
+      transform: translateY(-1px);
+      box-shadow: 0 6px 24px rgba(0,242,254,.35);
+    }
+
+    /* ── HERO ─────────────────────────────────────── */
+    #app { position: relative; z-index: 1; }
+
+    .hero {
+      min-height: 100vh;
+      display: flex; flex-direction: column;
+      align-items: center; justify-content: center;
+      text-align: center;
+      padding: 120px 2rem 80px;
+      position: relative;
+    }
+
+    .hero-eyebrow {
+      display: inline-flex; align-items: center; gap: 8px;
+      background: rgba(0,242,254,.07);
+      border: 1px solid rgba(0,242,254,.18);
+      color: var(--cyan);
+      font-family: 'JetBrains Mono', monospace;
+      font-size: .7rem; font-weight: 500;
+      padding: 5px 14px; border-radius: 99px;
+      letter-spacing: .1em; text-transform: uppercase;
+      margin-bottom: 28px;
+      animation: fadeUp .6s .1s ease both;
+    }
+    .hero-eyebrow .dot {
+      width: 6px; height: 6px; border-radius: 50%;
+      background: var(--cyan);
+      animation: blink 1.4s ease-in-out infinite;
+    }
+    @keyframes blink { 0%,100% { opacity: 1; } 50% { opacity: .3; } }
+
+    .hero-title {
+      font-family: 'Bebas Neue', cursive;
+      font-size: clamp(4rem, 9vw, 8rem);
+      line-height: .95; letter-spacing: .03em;
+      margin-bottom: 24px;
+      animation: fadeUp .7s .2s ease both;
+    }
+    .hero-title .line-1 { color: var(--text); display: block; }
+    .hero-title .line-2 {
+      display: block;
+      background: linear-gradient(135deg, var(--cyan2), var(--cyan), var(--neon));
+      -webkit-background-clip: text; -webkit-text-fill-color: transparent;
+      background-clip: text;
+      filter: drop-shadow(0 0 24px rgba(0,242,254,.3));
+    }
+
+    .hero-sub {
+      color: var(--text2); font-size: 1rem; max-width: 480px;
+      line-height: 1.7; margin-bottom: 44px;
+      animation: fadeUp .7s .35s ease both;
+    }
+    .hero-sub strong { color: var(--cyan); font-weight: 700; }
+
+    @keyframes fadeUp {
+      from { opacity: 0; transform: translateY(24px); }
+      to   { opacity: 1; transform: translateY(0); }
+    }
+
+    /* BUTTON ROW */
+    .hero-btns {
+      display: flex; gap: 12px; flex-wrap: wrap; justify-content: center;
+      animation: fadeUp .7s .45s ease both;
+      margin-bottom: 72px;
+    }
+
+    /* PAGE CARDS (hero navigation) */
+    .page-cards {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(160px, 1fr));
+      gap: 14px; width: 100%; max-width: 900px;
+      animation: fadeUp .8s .55s ease both;
+    }
+    .page-card {
+      background: var(--card);
+      border: 1px solid var(--rim);
+      border-radius: var(--r);
+      padding: 24px 18px;
+      text-align: center;
+      display: flex; flex-direction: column; align-items: center; gap: 10px;
+      cursor: pointer; position: relative; overflow: hidden;
+      transition: transform .22s, border-color .22s, box-shadow .22s;
+      text-decoration: none;
+    }
+    .page-card::before {
+      content: '';
+      position: absolute; inset: 0;
+      background: linear-gradient(135deg, rgba(0,242,254,.06), transparent);
+      opacity: 0; transition: opacity .22s;
+    }
+    .page-card:hover { transform: translateY(-5px); border-color: var(--rim2); }
+    .page-card:hover::before { opacity: 1; }
+
+    .page-card.cyan:hover  { box-shadow: 0 8px 32px rgba(0,242,254,.18); border-color: rgba(0,242,254,.3); }
+    .page-card.violet:hover{ box-shadow: 0 8px 32px rgba(176,106,255,.18); border-color: rgba(176,106,255,.3); }
+    .page-card.amber:hover { box-shadow: 0 8px 32px rgba(255,179,71,.18); border-color: rgba(255,179,71,.3); }
+    .page-card.rose:hover  { box-shadow: 0 8px 32px rgba(255,107,157,.18); border-color: rgba(255,107,157,.3); }
+    .page-card.neon:hover  { box-shadow: 0 8px 32px rgba(57,255,20,.18); border-color: rgba(57,255,20,.3); }
+
+    .card-icon-wrap {
+      width: 52px; height: 52px; border-radius: 13px;
+      display: flex; align-items: center; justify-content: center;
+      font-size: 1.6rem;
+      transition: transform .2s;
+    }
+    .page-card:hover .card-icon-wrap { transform: scale(1.1) rotate(-3deg); }
+    .cyan  .card-icon-wrap { background: rgba(0,242,254,.1); }
+    .violet .card-icon-wrap { background: rgba(176,106,255,.1); }
+    .amber .card-icon-wrap { background: rgba(255,179,71,.1); }
+    .rose  .card-icon-wrap { background: rgba(255,107,157,.1); }
+    .neon  .card-icon-wrap { background: rgba(57,255,20,.1); }
+
+    .card-name {
+      font-size: .82rem; font-weight: 700; color: var(--text);
+      letter-spacing: .02em;
+    }
+    .card-desc { font-size: .7rem; color: var(--text2); line-height: 1.4; }
+    .card-arrow {
+      font-size: .75rem; color: var(--text3);
+      transition: color .2s, transform .2s;
+    }
+    .page-card:hover .card-arrow { color: var(--cyan); transform: translateX(3px); }
+
+    /* BADGE on card */
+    .card-badge {
+      position: absolute; top: 10px; right: 10px;
+      font-family: 'JetBrains Mono', monospace;
+      font-size: .58rem; font-weight: 500;
+      padding: 2px 7px; border-radius: 99px;
+      letter-spacing: .08em; text-transform: uppercase;
+    }
+    .badge-new { background: rgba(57,255,20,.12); color: var(--neon); border: 1px solid rgba(57,255,20,.25); }
+    .badge-hot { background: rgba(255,107,157,.12); color: var(--rose); border: 1px solid rgba(255,107,157,.25); }
+    .badge-live { background: rgba(0,242,254,.1); color: var(--cyan); border: 1px solid rgba(0,242,254,.2); }
+
+    /* ── STATS BAR ────────────────────────────────── */
+    .stats-section {
+      background: var(--layer);
+      border-top: 1px solid var(--rim);
+      border-bottom: 1px solid var(--rim);
+      padding: 40px 2rem;
+    }
+    .stats-inner {
+      max-width: 900px; margin: 0 auto;
+      display: grid; grid-template-columns: repeat(4,1fr); gap: 0;
+    }
+    .stat-item {
+      text-align: center; padding: 12px 20px;
+      position: relative;
+    }
+    .stat-item + .stat-item::before {
+      content: ''; position: absolute; left: 0; top: 15%; height: 70%;
+      width: 1px; background: var(--rim);
+    }
+    .stat-num {
+      font-family: 'Bebas Neue', cursive;
+      font-size: 2.8rem; letter-spacing: .03em;
+      background: linear-gradient(135deg, var(--cyan2), var(--cyan));
+      -webkit-background-clip: text; -webkit-text-fill-color: transparent;
+      background-clip: text; line-height: 1;
+    }
+    .stat-lbl { font-size: .72rem; color: var(--text2); margin-top: 4px; font-weight: 500; }
+
+    /* ── FEATURES SECTION ─────────────────────────── */
+    .section {
+      max-width: 1000px; margin: 0 auto;
+      padding: 80px 2rem;
+    }
+    .section-tag {
+      font-family: 'JetBrains Mono', monospace;
+      font-size: .7rem; color: var(--cyan); letter-spacing: .15em;
+      text-transform: uppercase;
+      display: flex; align-items: center; gap: 10px;
+      margin-bottom: 16px;
+    }
+    .section-tag::before { content: ''; width: 24px; height: 1px; background: var(--cyan); }
+    .section-title {
+      font-family: 'Bebas Neue', cursive;
+      font-size: clamp(2.2rem, 4vw, 3.2rem);
+      letter-spacing: .04em; margin-bottom: 14px; line-height: 1;
+    }
+    .section-sub { color: var(--text2); font-size: .9rem; max-width: 420px; line-height: 1.65; margin-bottom: 48px; }
+
+    .features-grid {
+      display: grid; grid-template-columns: repeat(3,1fr); gap: 16px;
+    }
+    .feature-card {
+      background: var(--card); border: 1px solid var(--rim);
+      border-radius: var(--r); padding: 28px 22px;
+      transition: transform .2s, border-color .2s, box-shadow .2s;
+      position: relative; overflow: hidden;
+    }
+    .feature-card::after {
+      content: '';
+      position: absolute; bottom: 0; left: 0; right: 0;
+      height: 2px;
+      background: linear-gradient(90deg, var(--cyan2), var(--cyan));
+      transform: scaleX(0); transform-origin: left;
+      transition: transform .3s;
+    }
+    .feature-card:hover { transform: translateY(-3px); border-color: var(--rim2); box-shadow: 0 8px 30px rgba(0,0,0,.4); }
+    .feature-card:hover::after { transform: scaleX(1); }
+    .feat-icon {
+      width: 48px; height: 48px; border-radius: 12px;
+      background: rgba(0,242,254,.08);
+      display: flex; align-items: center; justify-content: center;
+      font-size: 1.4rem; margin-bottom: 16px;
+    }
+    .feat-title { font-size: .9rem; font-weight: 700; margin-bottom: 6px; color: var(--text); }
+    .feat-desc { font-size: .78rem; color: var(--text2); line-height: 1.6; }
+
+    /* ── FORMS SHOWCASE ───────────────────────────── */
+    .showcase-grid {
+      display: grid; grid-template-columns: repeat(2,1fr); gap: 14px;
+    }
+    .showcase-card {
+      background: var(--card); border: 1px solid var(--rim);
+      border-radius: var(--r); padding: 22px;
+      display: flex; align-items: flex-start; gap: 16px;
+      transition: all .2s; cursor: pointer; text-decoration: none;
+    }
+    .showcase-card:hover { border-color: var(--rim2); transform: translateX(4px); }
+    .sc-icon-box {
+      width: 50px; height: 50px; border-radius: 12px; flex-shrink: 0;
+      display: flex; align-items: center; justify-content: center; font-size: 1.4rem;
+    }
+    .sc-title { font-size: .88rem; font-weight: 700; color: var(--text); margin-bottom: 4px; }
+    .sc-desc { font-size: .74rem; color: var(--text2); line-height: 1.5; }
+    .sc-link {
+      font-family: 'JetBrains Mono', monospace;
+      font-size: .65rem; color: var(--cyan); margin-top: 8px;
+      display: flex; align-items: center; gap: 4px;
+    }
+
+    /* ── HOW IT WORKS ─────────────────────────────── */
+    .steps-row {
+      display: grid; grid-template-columns: repeat(4,1fr); gap: 0;
+      position: relative;
+    }
+    .steps-row::before {
+      content: '';
+      position: absolute; top: 22px; left: 0; right: 0; height: 1px;
+      background: linear-gradient(90deg, transparent, var(--rim2), var(--rim2), transparent);
+    }
+    .step-col { text-align: center; padding: 0 16px; }
+    .step-num {
+      width: 44px; height: 44px; border-radius: 50%;
+      background: var(--layer); border: 1px solid var(--rim2);
+      display: flex; align-items: center; justify-content: center;
+      font-family: 'JetBrains Mono', monospace;
+      font-size: .8rem; color: var(--cyan); font-weight: 500;
+      margin: 0 auto 20px; position: relative; z-index: 1;
+    }
+    .step-title { font-size: .85rem; font-weight: 700; color: var(--text); margin-bottom: 6px; }
+    .step-desc { font-size: .74rem; color: var(--text2); line-height: 1.55; }
+
+    /* ── TESTIMONIALS ─────────────────────────────── */
+    .testi-grid { display: grid; grid-template-columns: repeat(3,1fr); gap: 14px; }
+    .testi-card {
+      background: var(--card); border: 1px solid var(--rim);
+      border-radius: var(--r); padding: 22px;
+    }
+    .testi-stars { color: var(--amber); font-size: .85rem; margin-bottom: 12px; letter-spacing: 1px; }
+    .testi-text { font-size: .8rem; color: var(--text2); line-height: 1.65; margin-bottom: 16px; font-style: italic; }
+    .testi-author { display: flex; align-items: center; gap: 10px; }
+    .testi-avatar {
+      width: 36px; height: 36px; border-radius: 50%;
+      background: linear-gradient(135deg, var(--cyan2), var(--violet));
+      display: flex; align-items: center; justify-content: center;
+      font-size: .8rem; font-weight: 800; color: #fff;
+    }
+    .testi-name { font-size: .8rem; font-weight: 700; color: var(--text); }
+    .testi-role { font-size: .68rem; color: var(--text3); }
+
+    /* ── CTA BANNER ──────────────────────────────── */
+    .cta-band {
+      margin: 0 2rem 80px;
+      max-width: 960px; margin-left: auto; margin-right: auto;
+      background: linear-gradient(135deg, var(--deep), var(--layer));
+      border: 1px solid rgba(0,242,254,.15);
+      border-radius: 24px; padding: 52px 48px;
+      text-align: center; position: relative; overflow: hidden;
+    }
+    .cta-band::before {
+      content: '';
+      position: absolute; top: -80px; right: -80px;
+      width: 280px; height: 280px; border-radius: 50%;
+      background: radial-gradient(circle, rgba(0,242,254,.1) 0%, transparent 70%);
+    }
+    .cta-band::after {
+      content: '';
+      position: absolute; bottom: -80px; left: -80px;
+      width: 240px; height: 240px; border-radius: 50%;
+      background: radial-gradient(circle, rgba(176,106,255,.08) 0%, transparent 70%);
+    }
+    .cta-band h2 {
+      font-family: 'Bebas Neue', cursive;
+      font-size: clamp(2rem,4vw,3rem); letter-spacing: .04em;
+      margin-bottom: 12px; position: relative; z-index: 1;
+    }
+    .cta-band p { color: var(--text2); font-size: .9rem; max-width: 420px; margin: 0 auto 28px; line-height: 1.65; position: relative; z-index: 1; }
+    .cta-btns { display: flex; gap: 12px; justify-content: center; flex-wrap: wrap; position: relative; z-index: 1; }
+
+    /* ── BUTTONS ─────────────────────────────────── */
+    .btn {
+      display: inline-flex; align-items: center; gap: 7px;
+      padding: 12px 26px; border-radius: 11px;
+      font-family: 'Manrope', sans-serif;
+      font-size: .85rem; font-weight: 700; letter-spacing: .02em;
+      cursor: pointer; border: none; transition: all .2s;
+    }
+    .btn-primary {
+      background: linear-gradient(135deg, var(--cyan2), var(--cyan));
+      color: var(--void);
+      box-shadow: 0 0 0 rgba(0,242,254,0);
+    }
+    .btn-primary:hover { transform: translateY(-2px); box-shadow: 0 8px 28px rgba(0,242,254,.35); }
+    .btn-outline {
+      background: transparent;
+      border: 1.5px solid var(--rim2);
+      color: var(--text2);
+    }
+    .btn-outline:hover { border-color: var(--cyan); color: var(--cyan); background: rgba(0,242,254,.05); }
+    .btn-ghost {
+      background: transparent;
+      color: var(--cyan); font-size: .8rem;
+    }
+    .btn-ghost:hover { color: var(--text); }
+
+    /* ── FOOTER ──────────────────────────────────── */
+    .footer {
+      background: var(--deep);
+      border-top: 1px solid var(--rim);
+      padding: 48px 2rem 28px;
+    }
+    .footer-inner {
+      max-width: 1000px; margin: 0 auto;
+      display: grid; grid-template-columns: 2fr 1fr 1fr 1fr; gap: 36px;
+      margin-bottom: 40px;
+    }
+    .footer-brand p { color: var(--text2); font-size: .78rem; line-height: 1.7; margin-top: 12px; max-width: 220px; }
+    .footer-col h4 {
+      font-family: 'JetBrains Mono', monospace;
+      font-size: .68rem; color: var(--text3); text-transform: uppercase;
+      letter-spacing: .12em; margin-bottom: 14px;
+    }
+    .footer-col a {
+      display: block; color: var(--text2); font-size: .78rem;
+      margin-bottom: 9px; transition: color .15s;
+    }
+    .footer-col a:hover { color: var(--cyan); }
+    .footer-bottom {
+      max-width: 1000px; margin: 0 auto;
+      padding-top: 24px; border-top: 1px solid var(--rim);
+      display: flex; justify-content: space-between; align-items: center;
+      flex-wrap: wrap; gap: 12px;
+    }
+    .footer-bottom p { font-size: .74rem; color: var(--text3); }
+
+    /* STATUS BADGE */
+    .status-badge {
+      display: inline-flex; align-items: center; gap: 6px;
+      font-family: 'JetBrains Mono', monospace;
+      font-size: .68rem; color: var(--neon);
+      background: rgba(57,255,20,.07);
+      border: 1px solid rgba(57,255,20,.2);
+      padding: 4px 10px; border-radius: 99px;
+    }
+    .status-dot { width: 6px; height: 6px; border-radius: 50%; background: var(--neon); animation: blink 1.4s infinite; }
+
+    /* ANNOUNCEMENT BAR */
+    .announce {
+      background: linear-gradient(90deg, rgba(0,242,254,.08), rgba(176,106,255,.06), rgba(0,242,254,.08));
+      border-bottom: 1px solid var(--rim);
+      padding: 10px 2rem;
+      text-align: center;
+      font-size: .75rem; color: var(--text2);
+      display: flex; align-items: center; justify-content: center; gap: 10px;
+    }
+    .announce strong { color: var(--cyan); }
+    .announce-dismiss {
+      background: none; border: none; color: var(--text3); cursor: pointer;
+      font-size: .85rem; margin-left: 12px; transition: color .15s;
+    }
+    .announce-dismiss:hover { color: var(--text); }
+
+    /* SCROLL INDICATOR */
+    .scroll-indicator {
+      position: absolute; bottom: 32px; left: 50%; transform: translateX(-50%);
+      display: flex; flex-direction: column; align-items: center; gap: 6px;
+      color: var(--text3); font-size: .68rem; letter-spacing: .1em; text-transform: uppercase;
+      animation: fadeIn 1s 1.5s ease both;
+    }
+    .scroll-arrow {
+      width: 22px; height: 36px; border: 1px solid var(--rim2);
+      border-radius: 11px; position: relative; overflow: hidden;
+    }
+    .scroll-arrow::after {
+      content: '';
+      position: absolute; top: 5px; left: 50%; transform: translateX(-50%);
+      width: 4px; height: 7px; border-radius: 2px;
+      background: var(--cyan);
+      animation: scrollDot 1.5s ease-in-out infinite;
+    }
+    @keyframes scrollDot {
+      0%   { top: 5px; opacity: 1; }
+      80%  { top: 20px; opacity: .3; }
+      100% { top: 5px; opacity: 0; }
+    }
+    @keyframes fadeIn { from { opacity: 0; } to { opacity: 1; } }
+
+    /* MOBILE NAV TOGGLE */
+    .nav-mobile-toggle {
+      display: none; background: none; border: none;
+      color: var(--text); font-size: 1.2rem; cursor: pointer;
+    }
+    .mobile-menu {
+      display: none;
+      position: fixed; top: 64px; left: 0; right: 0; z-index: 999;
+      background: rgba(6,7,13,.96); backdrop-filter: blur(20px);
+      border-bottom: 1px solid var(--rim);
+      padding: 20px;
+      flex-direction: column; gap: 8px;
+    }
+    .mobile-menu.open { display: flex; }
+    .mobile-menu .nav-link { padding: 12px 16px; }
+
+    /* ── RESPONSIVE ─────────────────────────────── */
+    @media (max-width: 900px) {
+      .features-grid { grid-template-columns: repeat(2,1fr); }
+      .showcase-grid { grid-template-columns: 1fr; }
+      .steps-row { grid-template-columns: repeat(2,1fr); }
+      .steps-row::before { display: none; }
+      .testi-grid { grid-template-columns: 1fr; }
+      .footer-inner { grid-template-columns: 1fr 1fr; }
+      .stats-inner { grid-template-columns: repeat(2,1fr); }
+    }
+    @media (max-width: 620px) {
+      .nav-links { display: none; }
+      .nav-cta { display: none; }
+      .nav-mobile-toggle { display: block; }
+      .hero-title { font-size: 3.5rem; }
+      .page-cards { grid-template-columns: repeat(2,1fr); }
+      .features-grid { grid-template-columns: 1fr; }
+      .steps-row { grid-template-columns: 1fr; }
+      .footer-inner { grid-template-columns: 1fr; }
+      .cta-band { padding: 36px 24px; }
+      .stats-inner { grid-template-columns: repeat(2,1fr); }
+    }
+  </style>
+</head>
+<body>
+
+<!-- PARTICLES -->
+<div class="bg-layer">
+  <div class="blob blob-1"></div>
+  <div class="blob blob-2"></div>
+  <div class="blob blob-3"></div>
+  <div id="particles"></div>
+</div>
+
+<div id="app">
+
+<!-- ANNOUNCEMENT BAR -->
+<div class="announce" id="announce">
+  <span>🎉 <strong>v2.0 is live!</strong> — New Entertainment & Student forms with real-time validation</span>
+  <button class="announce-dismiss" onclick="document.getElementById('announce').remove()">✕</button>
+</div>
+
+<!-- NAVBAR -->
+<nav class="nav">
+  <div class="nav-brand">
+    <div class="nav-logo-mark">FF</div>
+    <div class="nav-wordmark">Form<span>Flow</span></div>
+  </div>
+  <div class="nav-links">
+    <a href="index.html" class="nav-link active">Home</a>
+    <a href="login.html" class="nav-link">Login</a>
+    <a href="register.html" class="nav-link">Register</a>
+    <a href="Courses registration.html" class="nav-link">Courses</a>
+    <a href="Student registration.html" class="nav-link">Student</a>
+    <a href="Entertainment.html" class="nav-link">Entertainment</a>
+  </div>
+  <a href="register.html" class="nav-cta btn">
+    Get Started →
+  </a>
+  <button class="nav-mobile-toggle" onclick="document.querySelector('.mobile-menu').classList.toggle('open')">☰</button>
+</nav>
+
+<!-- MOBILE MENU -->
+<div class="mobile-menu">
+  <a href="index.html" class="nav-link">🏠 Home</a>
+  <a href="login.html" class="nav-link">🔐 Login</a>
+  <a href="register.html" class="nav-link">📝 Register</a>
+  <a href="Courses registration.html" class="nav-link">🎓 Courses</a>
+  <a href="Student registration.html" class="nav-link">🎒 Student</a>
+  <a href="Entertainment.html" class="nav-link">🎬 Entertainment</a>
+</div>
+
+<!-- ======================== HERO ======================== -->
+<section class="hero">
+  <div class="hero-eyebrow">
+    <span class="dot"></span> v2.0 · Forms Project
+  </div>
+  <h1 class="hero-title">
+    <span class="line-1">Build Beautiful</span>
+    <span class="line-2">Form Experiences</span>
+  </h1>
+  <p class="hero-sub">
+    A complete collection of <strong>production-grade forms</strong> — Login, Registration, Courses, Students, Entertainment & more. Fully designed. Fully functional.
+  </p>
+
+  <div class="hero-btns">
+    <a href="register.html" class="btn btn-primary">🚀 Create Account</a>
+    <a href="login.html" class="btn btn-outline">🔐 Sign In</a>
+  </div>
+
+  <!-- PAGE CARDS -->
+  <div class="page-cards">
+    <a href="login.html" class="page-card cyan">
+      <div class="card-icon-wrap">🔐</div>
+      <div class="card-name">Login Form</div>
+      <div class="card-desc">Secure sign-in with validation</div>
+      <div class="card-arrow">→</div>
+    </a>
+    <a href="register.html" class="page-card violet">
+      <span class="card-badge badge-live">Live</span>
+      <div class="card-icon-wrap">📝</div>
+      <div class="card-name">Register</div>
+      <div class="card-desc">Full account creation flow</div>
+      <div class="card-arrow">→</div>
+    </a>
+    <a href="Courses registration.html" class="page-card amber">
+      <span class="card-badge badge-hot">Hot</span>
+      <div class="card-icon-wrap">🎓</div>
+      <div class="card-name">Courses</div>
+      <div class="card-desc">Course enrollment & selection</div>
+      <div class="card-arrow">→</div>
+    </a>
+    <a href="Student registration.html" class="page-card rose">
+      <div class="card-icon-wrap">🎒</div>
+      <div class="card-name">Student Reg</div>
+      <div class="card-desc">Student profile registration</div>
+      <div class="card-arrow">→</div>
+    </a>
+    <a href="Entertainment.html" class="page-card neon">
+      <span class="card-badge badge-new">New</span>
+      <div class="card-icon-wrap">🎬</div>
+      <div class="card-name">Entertainment</div>
+      <div class="card-desc">Event & ticket booking form</div>
+      <div class="card-arrow">→</div>
+    </a>
+    <a href="Login.html" class="page-card cyan">
+      <div class="card-icon-wrap">🔑</div>
+      <div class="card-name">Login v2</div>
+      <div class="card-desc">Alternative login design</div>
+      <div class="card-arrow">→</div>
+    </a>
+  </div>
+
+  <!-- SCROLL INDICATOR -->
+  <div class="scroll-indicator">
+    <div class="scroll-arrow"></div>
+    Scroll
+  </div>
+</section>
+
+<!-- ======================== STATS ======================== -->
+<div class="stats-section">
+  <div class="stats-inner">
+    <div class="stat-item">
+      <div class="stat-num" id="stat1">0</div>
+      <div class="stat-lbl">Form Pages Built</div>
+    </div>
+    <div class="stat-item">
+      <div class="stat-num" id="stat2">0</div>
+      <div class="stat-lbl">Validated Fields</div>
+    </div>
+    <div class="stat-item">
+      <div class="stat-num" id="stat3">0</div>
+      <div class="stat-lbl">Design Components</div>
+    </div>
+    <div class="stat-item">
+      <div class="stat-num">100%</div>
+      <div class="stat-lbl">Pure HTML/CSS/JS</div>
+    </div>
+  </div>
+</div>
+
+<!-- ======================== FEATURES ======================== -->
+<section class="section">
+  <div class="section-tag">Why FormFlow</div>
+  <h2 class="section-title">EVERYTHING<br>YOU NEED</h2>
+  <p class="section-sub">Every form ships with validation, accessibility, beautiful design and responsive layout built in.</p>
+
+  <div class="features-grid">
+    <div class="feature-card">
+      <div class="feat-icon" style="background:rgba(0,242,254,.1)">✅</div>
+      <div class="feat-title">Real-time Validation</div>
+      <div class="feat-desc">Instant field-level feedback as users type. No waiting for form submission to discover errors.</div>
+    </div>
+    <div class="feature-card">
+      <div class="feat-icon" style="background:rgba(176,106,255,.1)">📱</div>
+      <div class="feat-title">Fully Responsive</div>
+      <div class="feat-desc">Every form looks perfect on mobile, tablet, and desktop. Tested across all screen sizes.</div>
+    </div>
+    <div class="feature-card">
+      <div class="feat-icon" style="background:rgba(57,255,20,.1)">⚡</div>
+      <div class="feat-title">Zero Dependencies</div>
+      <div class="feat-desc">Pure HTML, CSS and JavaScript. No frameworks required. Fast, clean, lightweight code.</div>
+    </div>
+    <div class="feature-card">
+      <div class="feat-icon" style="background:rgba(255,179,71,.1)">🎨</div>
+      <div class="feat-title">Dark Theme Design</div>
+      <div class="feat-desc">Premium dark aesthetic with cyan accents, glassmorphism and smooth micro-animations.</div>
+    </div>
+    <div class="feature-card">
+      <div class="feat-icon" style="background:rgba(255,107,157,.1)">🔐</div>
+      <div class="feat-title">Secure Forms</div>
+      <div class="feat-desc">Password strength indicators, email format checking, and required field enforcement built in.</div>
+    </div>
+    <div class="feature-card">
+      <div class="feat-icon" style="background:rgba(79,172,254,.1)">📋</div>
+      <div class="feat-title">Multi-Step Flows</div>
+      <div class="feat-desc">Complex registrations broken into digestible steps with progress indicators and review screens.</div>
+    </div>
+  </div>
+</section>
+
+<!-- ======================== FORMS SHOWCASE ======================== -->
+<section class="section" style="padding-top:0">
+  <div class="section-tag">All Pages</div>
+  <h2 class="section-title">FORM<br>DIRECTORY</h2>
+  <p class="section-sub">Browse all available form pages in this project.</p>
+
+  <div class="showcase-grid">
+    <a href="login.html" class="showcase-card">
+      <div class="sc-icon-box" style="background:rgba(0,242,254,.1)">🔐</div>
+      <div>
+        <div class="sc-title">Login Form</div>
+        <div class="sc-desc">Email & password authentication with remember me, forgot password flow, and Google/Microsoft OAuth buttons.</div>
+        <div class="sc-link">login.html →</div>
+      </div>
+    </a>
+    <a href="register.html" class="showcase-card">
+      <div class="sc-icon-box" style="background:rgba(176,106,255,.1)">📝</div>
+      <div>
+        <div class="sc-title">Registration Form</div>
+        <div class="sc-desc">Full personal info registration with name, email, phone, password strength meter and terms agreement.</div>
+        <div class="sc-link">register.html →</div>
+      </div>
+    </a>
+    <a href="Courses registration.html" class="showcase-card">
+      <div class="sc-icon-box" style="background:rgba(255,179,71,.1)">🎓</div>
+      <div>
+        <div class="sc-title">Courses Registration</div>
+        <div class="sc-desc">3-step course enrollment: personal details → course & schedule selection → review & confirm with promo codes.</div>
+        <div class="sc-link">Courses registration.html →</div>
+      </div>
+    </a>
+    <a href="Student registration.html" class="showcase-card">
+      <div class="sc-icon-box" style="background:rgba(255,107,157,.1)">🎒</div>
+      <div>
+        <div class="sc-title">Student Registration</div>
+        <div class="sc-desc">Academic profile setup with student ID, program selection, academic year, and emergency contact details.</div>
+        <div class="sc-link">Student registration.html →</div>
+      </div>
+    </a>
+    <a href="Entertainment.html" class="showcase-card">
+      <div class="sc-icon-box" style="background:rgba(57,255,20,.1)">🎬</div>
+      <div>
+        <div class="sc-title">Entertainment Form</div>
+        <div class="sc-desc">Event registration, ticket booking and entertainment preference form with seat selection and payment info.</div>
+        <div class="sc-link">Entertainment.html →</div>
+      </div>
+    </a>
+    <a href="Login.html" class="showcase-card">
+      <div class="sc-icon-box" style="background:rgba(79,172,254,.1)">🔑</div>
+      <div>
+        <div class="sc-title">Login Form v2</div>
+        <div class="sc-desc">Alternative login design with different layout, social authentication options and enhanced security features.</div>
+        <div class="sc-link">Login.html →</div>
+      </div>
+    </a>
+  </div>
+</section>
+
+<!-- ======================== HOW IT WORKS ======================== -->
+<section class="section" style="padding-top:0">
+  <div class="section-tag">Getting Started</div>
+  <h2 class="section-title">HOW IT<br>WORKS</h2>
+  <p class="section-sub" style="margin-bottom:56px">Four simple steps from opening to submitting a form.</p>
+
+  <div class="steps-row">
+    <div class="step-col">
+      <div class="step-num">01</div>
+      <div class="step-title">Choose a Form</div>
+      <div class="step-desc">Pick from Login, Register, Courses, Student or Entertainment based on your needs.</div>
+    </div>
+    <div class="step-col">
+      <div class="step-num">02</div>
+      <div class="step-title">Fill Your Details</div>
+      <div class="step-desc">Enter your information. Real-time validation guides you through each required field.</div>
+    </div>
+    <div class="step-col">
+      <div class="step-num">03</div>
+      <div class="step-title">Review & Confirm</div>
+      <div class="step-desc">Multi-step forms show a summary. Review everything before final submission.</div>
+    </div>
+    <div class="step-col">
+      <div class="step-num">04</div>
+      <div class="step-title">Done! 🎉</div>
+      <div class="step-desc">See the success screen with a confirmation of your submitted data.</div>
+    </div>
+  </div>
+</section>
+
+<!-- ======================== TESTIMONIALS ======================== -->
+<section class="section" style="padding-top:0">
+  <div class="section-tag">Reviews</div>
+  <h2 class="section-title">WHAT USERS<br>SAY</h2>
+  <p class="section-sub" style="margin-bottom:40px">Feedback from people who've used these forms.</p>
+
+  <div class="testi-grid">
+    <div class="testi-card">
+      <div class="testi-stars">★★★★★</div>
+      <div class="testi-text">"The courses registration form is incredibly smooth. The 3-step process makes it so easy to fill everything without feeling overwhelmed."</div>
+      <div class="testi-author">
+        <div class="testi-avatar">JU</div>
+        <div>
+          <div class="testi-name">Jean Uwimana</div>
+          <div class="testi-role">Student, Kigali</div>
+        </div>
+      </div>
+    </div>
+    <div class="testi-card">
+      <div class="testi-stars">★★★★★</div>
+      <div class="testi-text">"The design is amazing — dark theme with those cyan accents looks so professional. Wish all websites looked like this."</div>
+      <div class="testi-author">
+        <div class="testi-avatar" style="background:linear-gradient(135deg,var(--amber),var(--rose))">AM</div>
+        <div>
+          <div class="testi-name">Alice Mukamana</div>
+          <div class="testi-role">Web Developer</div>
+        </div>
+      </div>
+    </div>
+    <div class="testi-card">
+      <div class="testi-stars">★★★★☆</div>
+      <div class="testi-text">"Login validation is great — gives instant feedback. The password strength meter is a really nice touch that most forms skip."</div>
+      <div class="testi-author">
+        <div class="testi-avatar" style="background:linear-gradient(135deg,var(--violet),var(--cyan2))">PM</div>
+        <div>
+          <div class="testi-name">Patrick Mugabo</div>
+          <div class="testi-role">Software Engineer</div>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ======================== CTA ======================== -->
+<div style="max-width:1000px;margin:0 auto;padding:0 2rem 80px">
+  <div class="cta-band">
+    <h2>READY TO EXPLORE?</h2>
+    <p>Jump into any of the 6 form pages and experience the full design system in action.</p>
+    <div class="cta-btns">
+      <a href="register.html" class="btn btn-primary">📝 Register Now</a>
+      <a href="login.html" class="btn btn-outline" style="color:var(--text2);border-color:var(--rim2)">🔐 Sign In</a>
+      <a href="Courses registration.html" class="btn btn-ghost">🎓 View Courses</a>
+    </div>
+  </div>
+</div>
+
+<!-- ======================== FOOTER ======================== -->
+<footer class="footer">
+  <div class="footer-inner">
+    <div class="footer-brand">
+      <div style="display:flex;align-items:center;gap:10px;margin-bottom:4px">
+        <div style="width:30px;height:30px;border-radius:8px;background:linear-gradient(135deg,var(--cyan2),var(--cyan));display:flex;align-items:center;justify-content:center;font-family:'Bebas Neue',cursive;font-size:1rem;color:var(--void)">FF</div>
+        <span style="font-family:'Bebas Neue',cursive;font-size:1.1rem;letter-spacing:.06em">FormFlow</span>
+      </div>
+      <p>A complete collection of beautifully designed, fully functional web forms. Built with pure HTML, CSS & JavaScript.</p>
+      <div class="status-badge" style="margin-top:14px">
+        <span class="status-dot"></span> All systems operational
+      </div>
+    </div>
+    <div class="footer-col">
+      <h4>Pages</h4>
+      <a href="index.html">Home</a>
+      <a href="login.html">Login Form</a>
+      <a href="register.html">Register Form</a>
+      <a href="Courses registration.html">Courses</a>
+    </div>
+    <div class="footer-col">
+      <h4>More Forms</h4>
+      <a href="Student registration.html">Student Reg</a>
+      <a href="Entertainment.html">Entertainment</a>
+      <a href="Login.html">Login v2</a>
+    </div>
+    <div class="footer-col">
+      <h4>Tech Stack</h4>
+      <a>HTML5</a>
+      <a>CSS3 + Variables</a>
+      <a>Vanilla JavaScript</a>
+      <a>Google Fonts</a>
+    </div>
+  </div>
+  <div class="footer-bottom">
+    <p>© 2026 FormFlow — My Forms Project. All Rights Reserved.</p>
+    <p style="display:flex;align-items:center;gap:6px">Made with <span style="color:var(--rose)">♥</span> using pure HTML/CSS/JS</p>
+  </div>
+</footer>
+
+</div><!-- #app -->
+
+<script>
+// ── PARTICLES ────────────────────────────────
+const container = document.getElementById('particles');
+for (let i = 0; i < 18; i++) {
+  const p = document.createElement('div');
+  p.classList.add('particle');
+  const size = Math.random() * 3 + 1.5;
+  p.style.cssText = `
+    width:${size}px;height:${size}px;
+    left:${Math.random()*100}%;
+    animation-duration:${Math.random()*12+10}s;
+    animation-delay:${Math.random()*14}s;
+    opacity:0;
+  `;
+  container.appendChild(p);
+}
+
+// ── COUNTER ANIMATION ────────────────────────
+function animateCounter(el, target, suffix='') {
+  let start = 0;
+  const duration = 1800;
+  const step = (timestamp) => {
+    if (!start) start = timestamp;
+    const progress = Math.min((timestamp - start) / duration, 1);
+    const eased = 1 - Math.pow(1 - progress, 3);
+    el.textContent = Math.floor(eased * target) + suffix;
+    if (progress < 1) requestAnimationFrame(step);
+  };
+  requestAnimationFrame(step);
+}
+
+// Trigger counters when stats section enters viewport
+const statsSection = document.querySelector('.stats-section');
+const observer = new IntersectionObserver((entries) => {
+  entries.forEach(e => {
+    if (e.isIntersecting) {
+      animateCounter(document.getElementById('stat1'), 6, '+');
+      animateCounter(document.getElementById('stat2'), 40, '+');
+      animateCounter(document.getElementById('stat3'), 25, '+');
+      observer.unobserve(e.target);
+    }
+  });
+}, { threshold: 0.4 });
+observer.observe(statsSection);
+
+// ── SCROLL REVEAL ────────────────────────────
+const revealEls = document.querySelectorAll('.feature-card, .showcase-card, .testi-card, .step-col, .page-card');
+const revObs = new IntersectionObserver((entries) => {
+  entries.forEach((e, i) => {
+    if (e.isIntersecting) {
+      setTimeout(() => {
+        e.target.style.opacity = '1';
+        e.target.style.transform = 'translateY(0)';
+      }, (i % 4) * 80);
+      revObs.unobserve(e.target);
+    }
+  });
+}, { threshold: 0.12 });
+
+revealEls.forEach(el => {
+  el.style.opacity = '0';
+  el.style.transform = 'translateY(22px)';
+  el.style.transition = 'opacity .5s ease, transform .5s ease';
+  revObs.observe(el);
+});
+
+// ── ACTIVE NAV LINK ──────────────────────────
+const links = document.querySelectorAll('.nav-link');
+links.forEach(l => {
+  if (l.getAttribute('href') === window.location.pathname.split('/').pop()) {
+    links.forEach(x => x.classList.remove('active'));
+    l.classList.add('active');
+  }
+});
+</script>
+</body>
+</html>
