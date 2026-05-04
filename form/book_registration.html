@@ -1,0 +1,203 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+<title>Book Registration — Cultural & Arts Hub</title>
+<link rel="stylesheet" href="style.css"/>
+</head>
+<body>
+<div class="page-wrapper">
+
+  <!-- HERO -->
+  <div class="hero-banner book-hero">
+    <div class="hero-top">
+      <div class="logo-circle">📖</div>
+      <div>
+        <div class="hero-title">Book Registration</div>
+        <div class="hero-sub">Cultural &amp; Arts Hub — Kigali</div>
+      </div>
+    </div>
+    <div class="hero-badge">Register a new book</div>
+  </div>
+
+  <!-- FORM -->
+  <div class="form-body book-form">
+
+    <!-- PROGRESS -->
+    <div class="progress-wrap">
+      <div class="progress-top">
+        <span>Form completion</span>
+        <span id="pct-label">0%</span>
+      </div>
+      <div class="progress-bar">
+        <div class="progress-fill book-fill" id="book-progress"></div>
+      </div>
+    </div>
+
+    <!-- SECTION 1: REGISTRANT INFO -->
+    <div class="section-label book-label">Registrant Information</div>
+    <div class="field-row">
+      <div class="field">
+        <label>Full Name <span class="req-book">*</span></label>
+        <input type="text" placeholder="Enter full name" oninput="updateProgress()" />
+      </div>
+      <div class="field">
+        <label>Phone Number <span class="req-book">*</span></label>
+        <input type="tel" placeholder="+250 7XX XXX XXX" oninput="updateProgress()" />
+      </div>
+    </div>
+    <div class="field-row">
+      <div class="field">
+        <label>Email Address</label>
+        <input type="email" placeholder="email@example.com" oninput="updateProgress()" />
+      </div>
+      <div class="field">
+        <label>Location <span class="req-book">*</span></label>
+        <input type="text" placeholder="District, City" oninput="updateProgress()" />
+      </div>
+    </div>
+
+    <!-- SECTION 2: BOOK DETAILS -->
+    <div class="section-label book-label">Book Details</div>
+    <div class="field-row single">
+      <div class="field">
+        <label>Book Title <span class="req-book">*</span></label>
+        <input type="text" placeholder="Enter the book title" oninput="updateProgress()" />
+      </div>
+    </div>
+    <div class="field-row">
+      <div class="field">
+        <label>Author <span class="req-book">*</span></label>
+        <input type="text" placeholder="Author's full name" oninput="updateProgress()" />
+      </div>
+      <div class="field">
+        <label>Publication Year</label>
+        <input type="number" placeholder="e.g. 2023" min="1900" max="2025" oninput="updateProgress()" />
+      </div>
+    </div>
+    <div class="field-row">
+      <div class="field">
+        <label>Language</label>
+        <select oninput="updateProgress()">
+          <option value="">Select language...</option>
+          <option>Kinyarwanda</option>
+          <option>French</option>
+          <option>English</option>
+          <option>Swahili</option>
+          <option>Other</option>
+        </select>
+      </div>
+      <div class="field">
+        <label>Number of Pages</label>
+        <input type="number" placeholder="e.g. 320" oninput="updateProgress()" />
+      </div>
+    </div>
+    <div class="field-row">
+      <div class="field">
+        <label>Price (RWF)</label>
+        <input type="number" placeholder="0" oninput="updateProgress()" />
+      </div>
+      <div class="field">
+        <label>Stock Available</label>
+        <input type="number" placeholder="0" oninput="updateProgress()" />
+      </div>
+    </div>
+
+    <!-- SECTION 3: GENRE -->
+    <div class="section-label book-label">Book Genre</div>
+    <div class="chip-grid" id="genre-chips"></div>
+
+    <!-- SECTION 4: SUMMARY -->
+    <div class="section-label book-label">Book Summary</div>
+    <div class="field-row single">
+      <div class="field">
+        <label>Short Description / Summary</label>
+        <textarea placeholder="Write a brief summary of the book..." oninput="updateProgress()"></textarea>
+      </div>
+    </div>
+
+    <!-- SECTION 5: RATING -->
+    <div class="section-label book-label">Book Rating</div>
+    <div class="stars-row" id="stars"></div>
+    <div class="star-hint" id="star-label">No rating given yet</div>
+
+    <!-- SUCCESS -->
+    <div id="book-success" class="success-msg book-success">
+      <div class="success-icon">🎉</div>
+      <div class="success-title">Book Registered Successfully!</div>
+      <div class="success-sub">Thank you. Your book has been added to the system.<br/>Our team will review it shortly.</div>
+      <button class="reset-btn book-reset" onclick="resetForm()">Register Another Book</button>
+    </div>
+
+    <div id="form-footer">
+      <button class="submit-btn book-btn" onclick="submitForm()">
+        Submit Book Registration ✦
+      </button>
+    </div>
+
+  </div><!-- /form-body -->
+</div><!-- /page-wrapper -->
+
+<script>
+  const genres = [
+    'History','Health & Wellness','Sports & Fitness','Technology',
+    'Literature','Folklore','News & Politics','Economics',
+    'Education','Religion','Science','Medicine','Fiction','Biography'
+  ];
+
+  let rating = 0;
+
+  /* Build genre chips */
+  document.getElementById('genre-chips').innerHTML =
+    genres.map(g =>
+      `<span class="chip book-chip" onclick="this.classList.toggle('selected')">${g}</span>`
+    ).join('');
+
+  /* Build stars */
+  function buildStars() {
+    const container = document.getElementById('stars');
+    container.innerHTML = '';
+    for (let i = 1; i <= 5; i++) {
+      const s = document.createElement('span');
+      s.className = 'star' + (i <= rating ? ' lit' : '');
+      s.textContent = '★';
+      s.onclick = () => { rating = i; buildStars(); };
+      container.appendChild(s);
+    }
+    const labels = ['','Very Poor','Poor','Average','Good','Excellent!'];
+    document.getElementById('star-label').textContent =
+      rating ? labels[rating] : 'No rating given yet';
+  }
+
+  /* Progress bar */
+  function updateProgress() {
+    const inputs = document.querySelectorAll('input, select, textarea');
+    let filled = 0;
+    inputs.forEach(i => { if (i.value.trim()) filled++; });
+    const pct = Math.min(100, Math.round((filled / inputs.length) * 100));
+    document.getElementById('book-progress').style.width = pct + '%';
+    document.getElementById('pct-label').textContent = pct + '%';
+  }
+
+  /* Submit */
+  function submitForm() {
+    document.getElementById('form-footer').style.display = 'none';
+    document.getElementById('book-success').style.display = 'block';
+  }
+
+  /* Reset */
+  function resetForm() {
+    document.getElementById('form-footer').style.display = '';
+    document.getElementById('book-success').style.display = 'none';
+    rating = 0; buildStars();
+    document.querySelectorAll('input, textarea').forEach(i => i.value = '');
+    document.querySelectorAll('select').forEach(s => s.selectedIndex = 0);
+    document.querySelectorAll('.chip').forEach(c => c.classList.remove('selected'));
+    document.getElementById('book-progress').style.width = '0%';
+    document.getElementById('pct-label').textContent = '0%';
+  }
+
+  buildStars();
+</script>
+<style
